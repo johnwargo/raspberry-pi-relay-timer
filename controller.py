@@ -13,29 +13,33 @@ import sys
 import time
 
 import numpy as np
+from gpiozero import Button
+from urllib2 import Request, urlopen, URLError
 
-# ============================================================================
-# String constants
-# ============================================================================
-single_hash = "#"
-hashes = "#########################################"
-slash_n = "\n"
-
-uses_solar_data = False
-relay_status = False
-
+# 'constants' that define the different time triggers used by the application
+# DO NOT MODIFY
 SETTIME = -1
 SUNRISE = -2
 SUNSET = -3
 
+# ============================================================================
+# User (that's you) adjustable variables
+# ============================================================================
+# adjust these variables based on your particular hardware configuration
+
+# set this variable to the button pin used in your implementation
+BUTTON_PIN = 4
+
 # Slots array defines time windows and behavior for the relay
-# format: [ OnTrigger, OnValue, OffTrigger, OffValue, Random]
+# format: [ OnTrigger, OnValue, OffTrigger, OffValue, doRandom]
 slots = np.array(
+    # ONLY modify the following array with your time settings
     [
         (SETTIME, 700, SETTIME, 900, False),
         (SETTIME, 1700, SETTIME, 2300, True),
         (SUNRISE, 15, SUNSET, -10, True)
     ],
+    # leave the rest of this alone
     dtype=[
         ('onTrigger', np.dtype(int)),
         ('onValue', np.dtype(int)),
@@ -44,14 +48,57 @@ slots = np.array(
         ('doRandom', np.dtype(bool))
     ]
 )
+# ============================================================================
+
+# ============================================================================
+# Other variables; Please don't modify these.
+# ============================================================================
+# used to help prettify the output
+single_hash = "#"
+hashes = "#########################################"
+slash_n = "\n"
+
+# variable used throughout the application to indicate whether the
+# application's current configuration uses the SUNRISE or SUNSET
+# triggers
+uses_solar_data = False
+
+# API for determining sunrise and sunset times: http://sunrise-sunset.org/api
+# Test URL to retrieve data for Charlotte, NC US
+# Usage: http://api.sunrise-sunset.org/json?lat=35.2271&lng=-80.8431&date=today
+SOLAR_API_URL = "http://api.sunrise-sunset.org/json"
+
+# Sunrise and sunset times vary depending on location, so...
+# If using sunrise or sunset as trigger options, populate the locLat
+# and locLong values with the location's latitude and longitude values
+# These values are for Charlotte, NC, to get Sunrise/Sunset values for
+# your location, replace these strings with the appropriate values for
+# your location.
+LOC_LAT = "35.227085";
+LOC_LONG = "-80.843124";
+
+# used to track the current state of the relay. At the start, the
+# application turns the relay off then sets this variable's value
+# the application can then later query this to determine what the
+# current state is for the relay, in the toggle function for example
+relay_status = False
+
+# Initialize the btn object and connect it to the button pin
+btn = Button(BUTTON_PIN)
 
 
 def validate_slot(slot):
+    # todo: validate a slot
+    print(slot)
     return True
 
 
-def validate_slots_array():
+def validate_slots():
+    global slots
+    # todo: setup return value
     # Make sure our slots configuration is valid
+    for slot in np.nditer(slots):
+        validate_slot(slot)
     return True
 
 
@@ -63,7 +110,11 @@ def init_app():
     uses_solar_data = check_for_solar_events()
     if uses_solar_data:
         print("Solar data enabled")
+        # todo: validate long and lat if solar data is enabled
+        # if LOC_LAT == "" or LOC_LONG == "":
 
+
+    # build the daily slots array
     build_daily_slots_array()
 
     # are we supposed to be on?
@@ -74,26 +125,32 @@ def init_app():
 
 
 def process_loop():
-    # initialize the lastMinute variable to the current time to start
-    last_minute = datetime.datetime.now().minute
-    # on startup, just use the previous minute as lastMinute
-    if last_minute == 0:
-        last_minute = 59
-    else:
-        last_minute -= 1
+    # initialize the lastMinute variable to the current time minus 1
+    # this subtraction isn't technically accurate, but for this purpose,
+    # just trying to understand if the minute changed, it's OK
+    last_time = get_time_24() - 1
     # infinite loop to continuously check time values
     while 1:
-        # Was the button pushed? Then toggle the relay
+        # Is the button pushed?
+        if btn.is_pressed:
+            # Then toggle the relay
+            toggle_relay()
+        else:
+            # otherwise...
+            # get the current time (in 24 hour format)
+            current_time = get_time_24()
+            # is the time the same as the last time we checked?
+            if current_time != last_time:
+                # No? OK, so the time changed and we may have work to do...
 
-        # get the current minute
-        current_minute = datetime.datetime.now().minute
-        # is it the same minute as the last time we checked?
-        if current_minute != last_minute:
-            # reset last_minute to the current_minute
-            last_minute = current_minute
+                # reset last_time to the current_time (so this doesn't happen until
+                # the next minute change
+                last_time = current_time
 
-            # startTime - turns all ports on
-            # end time - turns all ports off
+                # build the daily slots array every day at 12:01 AM
+                # that's 1 (001) in 24 hour time
+                if current_time == 1:
+                    build_daily_slots_array()
 
         # wait a second then check again
         # You can always increase the sleep value below to check less often
@@ -104,7 +161,19 @@ def check_for_solar_events():
     return False
 
 
+def get_solar_times():
+    request = Request(SOLAR_API_URL)
+
+    try:
+        response = urlopen(request)
+        kittens = response.read()
+        print(kittens[559:1000])
+    except URLError, e:
+        print('No kittez. Got an error code:', e)
+
+
 def build_daily_slots_array():
+    print("Building slots array")
     pass
 
 
@@ -113,7 +182,13 @@ def is_on_time():
 
 
 def get_time_24():
-    return 700
+    # return the current time in 24 hour format
+    the_time = datetime.datetime.now()
+    # build the 24 hour time using hours and minutes
+    if the_time.hour > 0:
+        return (the_time.hour * 100) + the_time.minute
+    else:
+        return the_time.minute
 
 
 def toggle_relay():
@@ -152,7 +227,7 @@ if __name__ == "__main__":
         # Turn the relay off to start (just to make sure)
         set_relay(False)
         # do we have a valid set of slots?
-        if validate_slots_array():
+        if validate_slots():
             init_app()
             process_loop()
         else:
