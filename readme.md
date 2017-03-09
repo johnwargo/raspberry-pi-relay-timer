@@ -1,14 +1,19 @@
 # Raspberry Pi Relay Timer
 
+Kielbasa strip steak doner frankfurter beef sirloin. Ribeye flank brisket cupim chicken pancetta shoulder drumstick fatback. Ground round frankfurter kevin salami, kielbasa drumstick bacon beef ribs venison shoulder fatback. Meatloaf sausage jerky t-bone meatball pastrami. Brisket shoulder corned beef, tenderloin meatball short loin venison rump. Fatback hamburger alcatra pork loin short ribs, cupim andouille leberkas ham. Jerky pork belly meatloaf picanha.
+
+Beef ribs cupim pancetta, jerky frankfurter jowl swine cow sirloin leberkas tail. Tongue meatball tri-tip ball tip. Short ribs boudin sirloin chuck. Venison t-bone leberkas picanha, shoulder rump sausage.
 
 ## Hardware Components
 
 To use this project, you'll need at a minimum the following hardware components:
 
 + [Raspberry Pi 3](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/)
-+ Some sort of relay board...
++ A compatible relay/relay board
 + 5V, 2.5A Micro USB power source (basically, a smartphone charger) - I use the [CanaKit 5V 2.5A Raspberry Pi 3 Power Supply/Adapter/Charger](https://www.amazon.com/gp/product/B00MARDJZ4)
  
+For the relay, I used the [1-channel relay board](http://www.yourduino.com/sunshop/index.php?l=product_detail&p=181) from yourduino.com. The boards they're selling now are different than the ones I had lying around. They have a really good [relay tutorial](http://arduino-info.wikispaces.com/ArduinoPower) on their web site; even though it's geared primarily at Arduino users, it's still a lot of good information. Amazon.com also has a good [selection of relay boards](https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=1+channel+relay) you can use as well.
+
 ## Configuring Your Raspberry Pi
 
 Download the latest version of the Raspbian OS from the [Raspberry Pi web site](https://www.raspberrypi.org/downloads/raspbian/) and follow the [instructions](https://www.raspberrypi.org/documentation/installation/installing-images/README.md) for writing the OS image to a Micro SD card for the Pi. Insert the **SD card** in the Pi, connect **Ethernet**, **keyboard**, **mouse**, and a **monitor** to the Pi and finally **power it up** using a smartphone charger or some suitable power source.
@@ -31,6 +36,8 @@ This updates the local catalog of applications. Next, execute the following comm
 
 This command will update the Raspbian OS with all updates released after the latest image was published. The update process will take a long time, so pay attention, answer any prompts, and expect this process to take a few minutes or more (the last time I did this, it took about 15 minutes or more to complete).
 
+    sudo pip install pytz
+        
 Now, lets download and project code; in the terminal window, execute the following command:
 
 	git clone https://github.com/johnwargo/Raspberry-Pi-Relay-Timer
