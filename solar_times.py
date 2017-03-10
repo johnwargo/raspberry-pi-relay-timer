@@ -6,9 +6,9 @@
 import sys
 from datetime import datetime
 
+import pytz
 import requests
-from dateutil import tz
-from pytz import reference
+import tzlocal
 
 # API for determining sunrise and sunset times; details at http://sunrise-sunset.org/api
 # Test URL to retrieve data for Charlotte, NC US:
@@ -29,6 +29,7 @@ LOC_LONG = "-80.843124"
 
 
 def get_solar_times():
+    # used to convert the string time values from the API into a Python date/time object
     format_str = "%I:%M:%S %p"
 
     print("\nRequesting solar data from", SOLAR_API_URL)
@@ -38,15 +39,12 @@ def get_solar_times():
         # did we get a result?
         if res.status_code == requests.codes.ok:
             data = res.json()
-
-            time_val = datetime.strptime(data['results']['sunrise'], format_str)
-            time_sunrise = adjust_time_24(time_val)
-            print("Sunrise:", data['results']['sunrise'], "(" + str(time_sunrise) + ")")
-
-            # time_val = datetime.strptime(data['results']['sunset'], format_str)
-            # time_sunset = adjust_time_24(time_val)
-            # print("Sunset:", data['results']['sunset'], "(" + str(time_sunset) + ")")
-
+            # time comes in as a string, in UTC time, but with no timezone data.
+            # it must be converted into a format we can use...
+            time_sunrise = adjust_time_utc(datetime.strptime(data['results']['sunrise'], format_str))
+            print("Sunrise:", str(time_sunrise))
+            time_sunset = adjust_time_utc(datetime.strptime(data['results']['sunset'], format_str))
+            print("Sunset:", str(time_sunset))
         else:
             print("Unable to obtain solar data; server returned", res.status_code)
     except ValueError as e:
@@ -55,25 +53,14 @@ def get_solar_times():
         print("Unexpected error:", e)
 
 
-def adjust_time_24(time_val):
-    # convert the time value to local time based on timezone
-    # this is where all the magic is supposed to happen.
-    # working_time = tz.localize(time_val)
-
+def adjust_time_utc(time_val):
     # http://stackoverflow.com/questions/4770297/python-convert-utc-datetime-string-to-local-datetime
-    # Tell the datetime object that it's in UTC time zone since
-    # datetime objects are 'naive' by default
-    time_val = time_val.replace(tzinfo=tz.tzutc())
-    # so now the time_val knows it's in UTC
-    # See?
-    print(time_val)
-
-    tmp_time = time_val.astimezone(reference.LocalTimezone())
-    print(tmp_time)
-
-    print("stop")
-
-    return get_time_24(time_val)
+    # time_val input value is assumed to be coming from the call to the solar data API
+    # therefore, the time will be a UTC time, but without the timezone data included with it.
+    # convert the time value to local time based on timezone
+    # time_val.replace(tzinfo=pytz.utc) adds timezone data to time_val
+    # time_val.astimezone(tzlocal.get_localzone()) returns the time value in the current timezone
+    return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
 
 
 def get_time_24(time_val):
