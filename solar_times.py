@@ -24,10 +24,6 @@ LOC_LAT = "35.227085"
 LOC_LONG = "-80.843124"
 
 
-# Set the local timezone
-# tz = pytz.timezone('US/Eastern')
-
-
 def get_solar_times():
     # used to convert the string time values from the API into a Python date/time object
     format_str = "%I:%M:%S %p"
@@ -63,16 +59,24 @@ def adjust_time_utc(time_val):
     return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
 
 
-def get_time_24(time_val):
+def get_time_24(time_val=datetime.now()):
     # build the 24 hour time using hours and minutes
-    if time_val.hour > 0:
-        return (time_val.hour * 100) + time_val.minute
+    # grab the current time if a time value isn't passed to the function
+    # do we have a valid time object?
+    if isinstance(time_val, datetime):
+        # then format the time
+        if time_val.hour > 0:
+            return (time_val.hour * 100) + time_val.minute
+        else:
+            return time_val.minute
     else:
-        return time_val.minute
+        # otherwise return junk
+        return -1
 
 
 if __name__ == "__main__":
     try:
+        print(get_time_24(23))
         get_solar_times()
     except KeyboardInterrupt:
         print("\nExiting application\n")

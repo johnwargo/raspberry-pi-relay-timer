@@ -16,6 +16,7 @@ import gpiozero
 import numpy as np
 import pytz
 import requests
+import tzlocal
 
 # from urllib2 import Request, urlopen, URLError
 
@@ -256,6 +257,7 @@ def get_solar_times():
     global time_sunrise
     global time_sunset
 
+    # used to convert the string time values from the API into a Python date/time object
     format_str = "%I:%M:%S %p"
 
     print("\nRequesting solar data from", SOLAR_API_URL)
@@ -265,19 +267,43 @@ def get_solar_times():
         # did we get a result?
         if res.status_code == requests.codes.ok:
             data = res.json()
-            time_val = datetime.strptime(data['results']['sunrise'], format_str)
-
-            time_sunrise = get_time_24_adjusted(time_val)
-            print("Sunrise:", data['results']['sunrise'], "(" + str(time_sunrise) + ")")
-            time_val = datetime.strptime(data['results']['sunset'], format_str)
-            time_sunset = get_time_24_adjusted(time_val)
-            print("Sunset:", data['results']['sunset'], "(" + str(time_sunset) + ")")
+            # time comes in as a string, in UTC time, but with no timezone data.
+            # it must be converted into a format we can use...
+            time_sunrise = adjust_time_utc(datetime.strptime(data['results']['sunrise'], format_str))
+            print("Sunrise:", str(time_sunrise))
+            time_sunset = adjust_time_utc(datetime.strptime(data['results']['sunset'], format_str))
+            print("Sunset:", str(time_sunset))
         else:
             print("Unable to obtain solar data; server returned", res.status_code)
     except ValueError as e:
         print("Value Error:", e)
     except Exception as e:
         print("Unexpected error:", e)
+
+
+def adjust_time_utc(time_val):
+    # http://stackoverflow.com/questions/4770297/python-convert-utc-datetime-string-to-local-datetime
+    # time_val input value is assumed to be coming from the call to the solar data API
+    # therefore, the time will be a UTC time, but without the timezone data included with it.
+    # convert the time value to local time based on timezone
+    # time_val.replace(tzinfo=pytz.utc) adds timezone data to time_val
+    # time_val.astimezone(tzlocal.get_localzone()) returns the time value in the current timezone
+    return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
+
+
+def get_time_24(time_val=datetime.now()):
+    # build the 24 hour time using hours and minutes
+    # grab the current time if a time value isn't passed to the function
+    # do we have a valid time object?
+    if isinstance(time_val, datetime):
+        # then format the time
+        if time_val.hour > 0:
+            return (time_val.hour * 100) + time_val.minute
+        else:
+            return time_val.minute
+    else:
+        # otherwise return junk
+        return -1
 
 
 def build_daily_slots_array():
@@ -287,24 +313,6 @@ def build_daily_slots_array():
 
 def is_on_time():
     return False
-
-
-def get_time_24():
-    # return the current time in 24 hour format
-    the_time = datetime.now()
-    # build the 24 hour time using hours and minutes
-    if the_time.hour > 0:
-        return (the_time.hour * 100) + the_time.minute
-    else:
-        return the_time.minute
-
-
-def get_time_24_adjusted(time_val):
-    working_time = tz.localize(time_val)
-    if working_time.hour > 0:
-        return (working_time.hour * 100) + working_time.minute
-    else:
-        return working_time.minute
 
 
 # ============================================================================
