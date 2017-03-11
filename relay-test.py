@@ -11,22 +11,27 @@ import time
 import gpiozero
 import relay
 
+# set this variable to the GPIO pin the relay is connected to
+RELAY_PIN = 18
+
 
 def main_loop():
-    # start by turning the relay off
+    # initialize the relay, nothing will work until you do
+    relay.init(RELAY_PIN)
+    # Turn the relay off, just to make sure it starts off
     relay.set_status(False)
     while 1:
         # then toggle the relay every second until the app closes
         relay.toggle()
         # wait a second
-        time.sleep(2)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
     try:
         main_loop()
     except KeyboardInterrupt:
-        # turn the relay off
+        # turn the relay off, just in case its on
         relay.set_status(False)
         print("\nExiting application\n")
         # exit the application

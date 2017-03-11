@@ -8,6 +8,7 @@
 
 from __future__ import print_function
 
+import random
 import sys
 import time
 from datetime import datetime
@@ -20,10 +21,8 @@ import tzlocal
 
 import relay
 
-# from urllib2 import Request, urlopen, URLError
-
 # 'constants' that define the different time triggers used by the application
-# DO NOT MODIFY
+# DO NOT MODIFY THESE, you'll mess up the app's logic
 SETTIME = -1
 SUNRISE = -2
 SUNSET = -3
@@ -35,6 +34,8 @@ SUNSET = -3
 
 # set this variable to the button pin used in your implementation
 BUTTON_PIN = 19
+# set this variable to the GPIO pin the relay is connected to
+RELAY_PIN = 18
 
 # Sunrise and sunset times vary depending on location, so...
 # If using sunrise or sunset as trigger options, populate the locLat
@@ -71,9 +72,6 @@ slots = np.array(
         ('doRandom', np.dtype(bool))
     ]
 )
-
-# Set the local timezone using the data provided here:
-tz = pytz.timezone('US/Eastern')
 # ============================================================================
 
 # ============================================================================
@@ -86,7 +84,8 @@ slash_n = "\n"
 
 # variable used throughout the application to indicate whether the
 # application's current configuration uses the SUNRISE or SUNSET
-# triggers
+# triggers. Starts at False, but will get reset to True if your
+# slots use one of the solar options
 uses_solar_data = False
 
 # API for determining sunrise and sunset times: http://sunrise-sunset.org/api
@@ -96,8 +95,16 @@ SOLAR_API_URL = "http://api.sunrise-sunset.org/json"
 # Make sure you set the local Timezone on the Raspberry Pi for this to
 # work correctly
 
+# initialize the daily slots array. It will be an empty object at start, but will
+# be populated every day with the current slots.
+daily_slots = None
+
 # Initialize the btn object and connect it to the button pin
 btn = gpiozero.Button(BUTTON_PIN)
+# initialize the relay object
+relay.init(RELAY_PIN)
+# initialize the random number generator
+random.seed(a=None)
 
 
 def init_app():
@@ -159,11 +166,12 @@ def process_loop():
                     if uses_solar_data:
                         # populate our sunrise and sunset values for the day
                         get_solar_times()
-                    # build the list of on/off times for today
-                    build_daily_slots_array()
+                        # build the list of on/off times for today
+                        build_daily_slots_array()
 
-                    # finally, check to see if we're supposed to be turning the
-                    # relay on or off
+                        # finally, check to see if we're supposed to be turning the
+                        # relay on or off
+                        # loop through slots, see if the current time = an on time or off time
 
         # wait a second then check again
         # You can always increase the sleep value below to check less often
@@ -271,9 +279,41 @@ def get_time_24(time_val=datetime.now()):
 
 
 def build_daily_slots_array():
+    global daily_slots
+
     print("\nBuilding slots array")
 
-    pass
+    # https://docs.scipy.org/doc/numpy/reference/generated/numpy.empty.html
+    daily_slots = np.empty([2], dtype=int)
+    print(daily_slots)
+
+    for slot in np.nditer(slots):
+        # get some data from the slot
+        do_random = slot['doRandom']
+        on_time = parse_slot_time(slot['onTrigger'], slot['onValue'])
+        print(on_time)
+        off_time = parse_slot_time(slot['offTrigger'], slot['offValue'])
+        print(off_time)
+
+        if do_random:
+            # https://docs.python.org/3/library/random.html
+            daily_slots = np.append(daily_slots, [on_time, off_time])
+            pass
+        else:
+            # https://docs.scipy.org/doc/numpy/reference/generated/numpy.append.html
+            daily_slots = np.append(daily_slots, [on_time, off_time])
+        print(daily_slots)
+
+
+def parse_slot_time(slot_trigger, slot_val):
+    if slot_trigger == SETTIME:
+        # return the time value
+        return slot_val
+    if slot_trigger == SUNRISE:
+        # return the calculated solar sunrise time
+        return time_sunrise + slot_val
+    # return the calculated solar sunset time
+    return time_sunset + slot_val
 
 
 def is_on_time():

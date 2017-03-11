@@ -6,11 +6,14 @@ import gpiozero
 # current state is for the relay, in the toggle function for example
 _relay_status = False
 
-# set this variable to the pin the relay is connected to
-RELAY_PIN = 18
+relay = None
 
-# initialize the relay object
-relay = gpiozero.OutputDevice(RELAY_PIN, active_high=True, initial_value=False)
+
+def init(relay_pin):
+    # initialize the relay object
+    print("Initializing relay object")
+    global relay
+    relay = gpiozero.OutputDevice(relay_pin, active_high=True, initial_value=False)
 
 
 def status():
@@ -21,15 +24,19 @@ def set_status(the_status):
     # sets the relay's status based on the boolean value passed to the function
     # a value of True turns the relay on, a value of False turns the relay off
     global _relay_status
+    global relay
 
-    _relay_status = the_status
+    if relay is not None:
+        _relay_status = the_status
 
-    if the_status:
-        print("Setting relay: ON")
-        relay.on()
+        if the_status:
+            print("Setting relay: ON")
+            relay.on()
+        else:
+            print("Setting relay: OFF")
+            relay.off()
     else:
-        print("Setting relay: OFF")
-        relay.off()
+        print("You must initialize the relay before you can use it")
 
 
 def toggle():
@@ -37,11 +44,15 @@ def toggle():
     # it will turn the relay off. If the relay is off, when you call this function,
     # it will turn the relay on. Easy peasy, right?
     global _relay_status
+    global relay
 
-    # flip our relay status value
-    _relay_status = not _relay_status
-    if _relay_status:
-        print("Toggling relay: ON")
+    if relay is not None:
+        # flip our relay status value
+        _relay_status = not _relay_status
+        if _relay_status:
+            print("Toggling relay: ON")
+        else:
+            print("Toggling relay: OFF")
+        relay.toggle()
     else:
-        print("Toggling relay: OFF")
-    relay.toggle()
+        print("You must initialize the relay before you can use it")
