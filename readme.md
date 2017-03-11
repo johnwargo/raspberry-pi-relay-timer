@@ -36,7 +36,7 @@ This updates the local catalog of applications. Next, execute the following comm
 
 This command will update the Raspbian OS with all updates released after the latest image was published. The update process will take a long time, so pay attention, answer any prompts, and expect this process to take a few minutes or more (the last time I did this, it took about 15 minutes or more to complete).
 
-    sudo pip install pytz
+    sudo pip install pytz tzlocal
         
 Now, lets download and project code; in the terminal window, execute the following command:
 

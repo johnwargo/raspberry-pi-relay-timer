@@ -18,6 +18,8 @@ import pytz
 import requests
 import tzlocal
 
+import relay
+
 # from urllib2 import Request, urlopen, URLError
 
 # 'constants' that define the different time triggers used by the application
@@ -31,8 +33,6 @@ SUNSET = -3
 # ============================================================================
 # adjust these variables based on your particular hardware configuration
 
-# set this variable to the pin the relay is connected to
-RELAY_PIN = 18
 # set this variable to the button pin used in your implementation
 BUTTON_PIN = 19
 
@@ -96,44 +96,8 @@ SOLAR_API_URL = "http://api.sunrise-sunset.org/json"
 # Make sure you set the local Timezone on the Raspberry Pi for this to
 # work correctly
 
-# used to track the current state of the relay. At the start, the
-# application turns the relay off then sets this variable's value
-# the application can then later query this to determine what the
-# current state is for the relay, in the toggle function for example
-relay_status = False
-
 # Initialize the btn object and connect it to the button pin
 btn = gpiozero.Button(BUTTON_PIN)
-
-# initialize the relay object
-relay = gpiozero.OutputDevice(RELAY_PIN, active_high=False, initial_value=False)
-
-
-def set_relay(status):
-    # sets the relay's status based on the boolean value passed to the function
-    # a value of True turns the relay on, a value of False turns the relay off
-    global relay_status
-
-    relay_status = status
-    if status:
-        print("Setting relay: ON")
-        relay.on()
-    else:
-        print("Setting relay: OFF")
-        relay.off()
-
-
-def toggle_relay():
-    # toggles the relay's status. If the relay is on, when you call this function,
-    # it will turn the relay off. If the relay is off, when you call this function,
-    # it will turn the relay on. Easy peasy, right?
-    global relay_status
-
-    print("toggling relay")
-    # flip our relay status value
-    relay_status = not relay_status
-    # toggle the relay
-    relay.toggle()
 
 
 def init_app():
@@ -160,7 +124,7 @@ def init_app():
     if is_on_time():
         # then turn the relay on
         print("\nWhoops, we're supposed to be on!")
-        set_relay(True)
+        relay.set_status(True)
 
 
 def process_loop():
@@ -174,7 +138,7 @@ def process_loop():
         if btn.is_pressed:
             print("Detected button push")
             # Then toggle the relay
-            toggle_relay()
+            relay.toggle()
         else:
             # otherwise...
             # get the current time (in 24 hour format)
@@ -286,7 +250,7 @@ def adjust_time_utc(time_val):
     # time_val input value is assumed to be coming from the call to the solar data API
     # therefore, the time will be a UTC time, but without the timezone data included with it.
     # convert the time value to local time based on timezone
-    # time_val.replace(tzinfo=pytz.utc) adds timezone data to time_val
+    # time_val.replace(tzinfo=pytz.utc) adds timezone information (utc) to time_val
     # time_val.astimezone(tzlocal.get_localzone()) returns the time value in the current timezone
     return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
 
@@ -308,6 +272,7 @@ def get_time_24(time_val=datetime.now()):
 
 def build_daily_slots_array():
     print("\nBuilding slots array")
+
     pass
 
 
@@ -326,7 +291,7 @@ print(hashes)
 if __name__ == "__main__":
     try:
         # Turn the relay off to start (just to make sure)
-        set_relay(False)
+        relay.set_status(False)
         # do we have a valid set of slots?
         if validate_slots():
             init_app()
