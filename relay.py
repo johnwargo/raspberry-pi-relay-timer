@@ -3,7 +3,7 @@ import gpiozero
 # used to track the current state of the relay. At the start, the
 # application turns the relay off then sets this variable's value
 # the application can then later query this to determine what the
-# current state is for the relay, in the toggle function for example
+# current state is for the relay, in the toggle function for example.
 _relay_status = False
 
 relay = None

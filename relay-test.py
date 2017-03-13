@@ -3,7 +3,7 @@
 # A simple Python application for controlling a relay board from a Raspberry Pi
 # The application uses the GPIO Zero library (https://gpiozero.readthedocs.io/en/stable/)
 # The relay is connected to one of the Pi's GPIO ports, then is defined as an Output device
-# in GPIO Zero: https://gpiozero.readthedocs.io/en/stable/api_output.html#outputdevice
+# in GPIO Zero: https://gpiozero.readthedocs.io/en/stable/api_output.html#outputdevice 
 
 import sys
 import time
