@@ -138,7 +138,7 @@ def process_loop():
     # initialize the lastMinute variable to the current time minus 1
     # this subtraction isn't technically accurate, but for this purpose,
     # just trying to understand if the minute changed, it's OK
-    last_time = get_time_24() - 1
+    last_time = inc_time(get_time_24(), -1)
     # infinite loop to continuously check time values
     while 1:
         # Is the button pushed?
@@ -169,10 +169,15 @@ def process_loop():
                         # build the list of on/off times for today
                         build_daily_slots_array()
 
-                        # finally, check to see if we're supposed to be turning the
-                        # relay on or off
-                        # loop through slots, see if the current time = an on time or off time
-
+                # finally, check to see if we're supposed to be turning the
+                # relay on or off
+                for slot in daily_slots:
+                    if current_time == slot[0]:
+                        relay.set_status(True)
+                    if current_time == slot[1]:
+                        relay.set_status(False)
+            else:
+                print("whoa")
         # wait a second then check again
         # You can always increase the sleep value below to check less often
         time.sleep(1)
@@ -270,9 +275,9 @@ def get_time_24(time_val=datetime.now()):
     if isinstance(time_val, datetime):
         # then format the time
         if time_val.hour > 0:
-            return (time_val.hour * 100) + time_val.minute
+            return int((time_val.hour * 100) + time_val.minute)
         else:
-            return time_val.minute
+            return int(time_val.minute)
     else:
         # otherwise return junk
         return -1
@@ -314,7 +319,7 @@ def build_daily_slots_array():
                 daily_slots.append([int(on_time), int(off_time)])
             else:
                 print("Skipping slot, on_time is AFTER off_time")
-    print(daily_slots)
+    print("Daily slots:", daily_slots)
 
 
 def inc_time(time_val, increment):
