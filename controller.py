@@ -308,6 +308,7 @@ def build_daily_slots_array():
                     # then set it to off_time, turn it off at off_time
                     oft = off_time
                 # save the  random 'slot' to the array
+                # cast to int just to make sure
                 daily_slots.append([int(ont), int(oft)])
                 # reset on time to the current off time + plus some random int
                 # this is when it goes on again next
@@ -316,6 +317,7 @@ def build_daily_slots_array():
             # is the on time BEFORE the off time? (can't be equal either)
             if on_time < off_time:
                 # then add the slot to the list of daily slots
+                # cast to int just to make sure
                 daily_slots.append([int(on_time), int(off_time)])
             else:
                 print("Skipping slot, on_time is AFTER off_time")
@@ -339,9 +341,11 @@ def inc_time(time_val, increment):
             return 2359
     # return our results
     if hours > 0:
-        return (hours * 100) + new_mins
+        # cast to int just to make sure
+        return int((hours * 100) + new_mins)
     else:
-        return new_mins
+        # cast to int just to make sure
+        return int(new_mins)
 
 
 def parse_slot_time(slot_trigger, slot_val):
