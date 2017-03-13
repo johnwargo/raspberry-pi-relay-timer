@@ -138,7 +138,7 @@ def process_loop():
     # initialize the lastMinute variable to the current time minus 1
     # this subtraction isn't technically accurate, but for this purpose,
     # just trying to understand if the minute changed, it's OK
-    last_time = inc_time(get_time_24(), -1)
+    last_time = inc_time(get_time_24(datetime.now()), -1)
     # infinite loop to continuously check time values
     while 1:
         # Is the button pushed?
@@ -149,16 +149,14 @@ def process_loop():
         else:
             # otherwise...
             # get the current time (in 24 hour format)
-            current_time = get_time_24()
+            current_time = get_time_24(datetime.now())
             # is the time the same as the last time we checked?
             if current_time != last_time:
                 # No? OK, so the time changed and we may have work to do...
                 print(current_time)
-
                 # reset last_time to the current_time (so this doesn't happen until
                 # the next minute change
                 last_time = current_time
-
                 # build the daily slots array every day at 12:01 AM
                 # that's 1 (001) in 24 hour time
                 if current_time == 1:
@@ -176,8 +174,6 @@ def process_loop():
                         relay.set_status(True)
                     if current_time == slot[1]:
                         relay.set_status(False)
-            else:
-                print("whoa")
         # wait a second then check again
         # You can always increase the sleep value below to check less often
         time.sleep(1)
@@ -268,9 +264,8 @@ def adjust_time_utc(time_val):
     return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
 
 
-def get_time_24(time_val=datetime.now()):
+def get_time_24(time_val):
     # build the 24 hour time using hours and minutes
-    # grab the current time if a time value isn't passed to the function
     # do we have a valid time object?
     if isinstance(time_val, datetime):
         # then format the time
@@ -284,6 +279,9 @@ def get_time_24(time_val=datetime.now()):
 
 
 def build_daily_slots_array():
+    # This function builds daily_slots based on the current settings in the slots array
+    # the application makes NO EFFORT to ensure unique slots. If your slots array contains
+    # any overlapping time windows, then so be it. Sorry.
     global daily_slots
 
     print("\nBuilding slots array")
@@ -295,7 +293,6 @@ def build_daily_slots_array():
         on_time = parse_slot_time(slot['onTrigger'], slot['onValue'])
         off_time = parse_slot_time(slot['offTrigger'], slot['offValue'])
         if do_random:
-            # https://docs.python.org/3/library/random.html
             # make random slots between on_time and off_time
             # set the initial on time to on_time
             ont = on_time
@@ -321,7 +318,11 @@ def build_daily_slots_array():
                 daily_slots.append([int(on_time), int(off_time)])
             else:
                 print("Skipping slot, on_time is AFTER off_time")
-    print("Daily slots:", daily_slots)
+    # print the slots list, a separate line for each slot
+    daily_slots.sort()
+    for slot in daily_slots:
+        print(slot)
+    print()
 
 
 def inc_time(time_val, increment):
@@ -363,7 +364,7 @@ def is_on_time():
     # Are we in an ON mode? In other words, is the current time between any of the
     # slot's on and off times?
     # Start by getting the current time (in 24 hour format)
-    curr_time = get_time_24()
+    curr_time = get_time_24(datetime.now())
     # look through all of the daily slot values
     for slot in daily_slots:
         # if current time is between on/off times, then we're True
@@ -394,4 +395,6 @@ if __name__ == "__main__":
             sys.exit(1)
     except KeyboardInterrupt:
         print("\nExiting application\n")
+        # turn the relay off, just to make sure.
+        relay.set_status(False)
         sys.exit(0)
