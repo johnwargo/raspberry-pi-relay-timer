@@ -40,9 +40,9 @@ This command will update the Raspbian OS with all updates released after the lat
         
 Now, lets download and project code; in the terminal window, execute the following command:
 
-	git clone https://github.com/johnwargo/Raspberry-Pi-Relay-Timer
+	git clone https://github.com/johnwargo/raspberry-pi-relay-timer
 
-This will download the project's code from its Github repository and copy the files to the local (relative to your terminal window) `Raspberry-Pi-Relay-Timer` folder. 
+This will download the project's code from its Github repository and copy the files to the local (relative to your terminal window) `raspberry-pi-relay-timer` folder. 
 
 ## Customizing the Controller's Time Slots
 
@@ -52,9 +52,9 @@ This will download the project's code from its Github repository and copy the fi
 
 Next, change to the folder you just created by executing the following command:
 
-	cd Raspberry-Pi-Relay-Timer
+	cd raspberry-pi-relay-timer
 
-Your terminal window prompt should change to reflect the switch to the new folder. Now, let start the server application. In the terminal window pointing to the `Raspberry-Pi-Relay-Timer` folder (you changed to this folder with the last command you typed), execute the following command:
+Your terminal window prompt should change to reflect the switch to the new folder. Now, let start the server application. In the terminal window pointing to the `raspberry-pi-relay-timer` folder (you changed to this folder with the last command you typed), execute the following command:
 
 	python ./controller.py
 
@@ -66,7 +66,7 @@ The controller process will start and begin managing the relay using the time sl
 
 Right now, the server is only running because you started it manually. There are a few steps you must complete to configure the Raspberry Pi so it executes the the relay controller app on startup. You can read more about this here: [Autostart Python App on Raspberry Pi in a Terminal Window](http://johnwargo.com/index.php/microcontrollers-single-board-computers/autostart-python-app-on-raspberry-pi-in-a-terminal-window.html).
 
-If you don't already have a terminal window open, open one then navigate to the folder where you extracted the project files (if you followed these instructions, it should be at `home/pi/Raspberry-Pi-Relay-Timer`. 
+If you don't already have a terminal window open, open one then navigate to the folder where you extracted the project files (if you followed these instructions, it should be at `home/pi/raspberry-pi-relay-timer`. 
 
 1.	Make the project's bash script file (`start-controller.sh`) executable by executing the following command:
 
@@ -78,7 +78,7 @@ If you don't already have a terminal window open, open one then navigate to the 
 
 3.	Add the following line to the end (bottom) of the file:
 
-		@lxterminal -e /home/pi/Raspberry-Pi-Relay-Timer/start-controller.sh
+		@lxterminal -e /home/pi/raspberry-pi-relay-timer/start-controller.sh
 
 	To save your changes, press `ctrl-o` then press the Enter key. Next, press `ctrl-x` to exit the `nano` application.
   
