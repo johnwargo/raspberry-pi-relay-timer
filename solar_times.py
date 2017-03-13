@@ -54,7 +54,7 @@ def adjust_time_utc(time_val):
     # time_val input value is assumed to be coming from the call to the solar data API
     # therefore, the time will be a UTC time, but without the timezone data included with it.
     # convert the time value to local time based on timezone
-    # time_val.replace(tzinfo=pytz.utc) adds timezone data to time_val
+    # time_val.replace(tzinfo=pytz.utc) adds timezone data to time_val 
     # time_val.astimezone(tzlocal.get_localzone()) returns the time value in the current timezone
     return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
 
