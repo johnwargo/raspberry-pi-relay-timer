@@ -2,7 +2,7 @@
 
 Kielbasa strip steak doner frankfurter beef sirloin. Ribeye flank brisket cupim chicken pancetta shoulder drumstick fatback. Ground round frankfurter kevin salami, kielbasa drumstick bacon beef ribs venison shoulder fatback. Meatloaf sausage jerky t-bone meatball pastrami. Brisket shoulder corned beef, tenderloin meatball short loin venison rump. Fatback hamburger alcatra pork loin short ribs, cupim andouille leberkas ham. Jerky pork belly meatloaf picanha.
 
-Beef ribs cupim pancetta, jerky frankfurter jowl swine cow sirloin leberkas tail. Tongue meatball tri-tip ball tip. Short ribs boudin sirloin chuck. Venison t-bone leberkas picanha, shoulder rump sausage.
+Beef ribs cupim pancetta, jerky frankfurter jowl swine cow sirloin leberkas tail. Tongue meatball tri-tip ball tip. Short ribs boudin sirloin chuck. Venison t-bone leberkas picanha, shoulder rump sausage.  
 
 ## Hardware Components
 

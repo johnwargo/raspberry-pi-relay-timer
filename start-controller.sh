@@ -4,4 +4,4 @@
 # http://www.raspberrypi-spy.co.uk/2014/05/how-to-autostart-apps-in-rasbian-lxde-desktop/
 
 echo "Starting relay timer process"
-/usr/bin/python /home/pi/pi-relay-timer/controller.py
+/usr/bin/python /home/pi/raspberry-pi-relay-timer/controller.py
