@@ -97,7 +97,7 @@ SOLAR_API_URL = "http://api.sunrise-sunset.org/json"
 
 # initialize the daily slots array. It will be an empty object at start, but will
 # be populated every day with the current slots.
-daily_slots = None
+daily_slots = []
 
 # Initialize the btn object and connect it to the button pin
 btn = gpiozero.Button(BUTTON_PIN)
@@ -278,45 +278,57 @@ def get_time_24(time_val=datetime.now()):
         return -1
 
 
+def empty_array(the_array):
+    print(the_array)
+    return the_array
+
+
 def build_daily_slots_array():
     global daily_slots
 
     print("\nBuilding slots array")
-
-    # https://docs.scipy.org/doc/numpy/reference/generated/numpy.empty.html
-    daily_slots = np.empty([2], dtype=int)
-    print(daily_slots)
-
+    daily_slots = []
+    # iterate through the slots array, adding the on_time and off_time values to the daily_slots array
     for slot in np.nditer(slots):
         # get some data from the slot
         do_random = slot['doRandom']
         on_time = parse_slot_time(slot['onTrigger'], slot['onValue'])
-        print(on_time)
         off_time = parse_slot_time(slot['offTrigger'], slot['offValue'])
-        print(off_time)
-
         if do_random:
             # https://docs.python.org/3/library/random.html
-            daily_slots = np.append(daily_slots, [on_time, off_time])
+            daily_slots.append([int(on_time), int(off_time)])
             pass
         else:
-            # https://docs.scipy.org/doc/numpy/reference/generated/numpy.append.html
-            daily_slots = np.append(daily_slots, [on_time, off_time])
+            # is the on time BEFORE the off time? (can't be equal either)
+            if on_time < off_time:
+                # then add the slot to the list of daily slots
+                daily_slots.append([int(on_time), int(off_time)])
+            else:
+                print("Skipping slot, on_time is AFTER off_time")
         print(daily_slots)
+
+    print("Printing slots")
+    for slot in daily_slots:
+        print(slot)
 
 
 def parse_slot_time(slot_trigger, slot_val):
     if slot_trigger == SETTIME:
         # return the time value
-        return slot_val
+        return int(slot_val)
     if slot_trigger == SUNRISE:
         # return the calculated solar sunrise time
-        return time_sunrise + slot_val
+        return int(time_sunrise + slot_val)
     # return the calculated solar sunset time
-    return time_sunset + slot_val
+    return int(time_sunset + slot_val)
 
 
-def is_on_time():
+def is_on_time(time_val):
+    # look through all of the daily slot values
+    for slot in daily_slots:
+        # if current time is between on/off times, then we're True
+        if slot[0] < time_val < slot[1]:
+            return True
     return False
 
 
