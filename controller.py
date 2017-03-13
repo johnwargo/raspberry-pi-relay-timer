@@ -278,11 +278,6 @@ def get_time_24(time_val=datetime.now()):
         return -1
 
 
-def empty_array(the_array):
-    print(the_array)
-    return the_array
-
-
 def build_daily_slots_array():
     global daily_slots
 
@@ -296,8 +291,22 @@ def build_daily_slots_array():
         off_time = parse_slot_time(slot['offTrigger'], slot['offValue'])
         if do_random:
             # https://docs.python.org/3/library/random.html
-            daily_slots.append([int(on_time), int(off_time)])
-            pass
+            # make random slots between on_time and off_time
+            # set the initial on time to on_time
+            ont = on_time
+            # repeat the following until we're past off_time
+            while ont < off_time:
+                # calculate an off time using a random value from 5 to 60
+                oft = inc_time(ont, random.randint(5, 60))
+                # is our new off time > off_time?
+                if oft > off_time:
+                    # then set it to off_time, turn it off at off_time
+                    oft = off_time
+                # save the  random 'slot' to the array
+                daily_slots.append([int(ont), int(oft)])
+                # reset on time to the current off time + plus some random int
+                # this is when it goes on again next
+                ont = inc_time(oft, random.randint(5, 60))
         else:
             # is the on time BEFORE the off time? (can't be equal either)
             if on_time < off_time:
@@ -305,11 +314,29 @@ def build_daily_slots_array():
                 daily_slots.append([int(on_time), int(off_time)])
             else:
                 print("Skipping slot, on_time is AFTER off_time")
-        print(daily_slots)
+    print(daily_slots)
 
-    print("Printing slots")
-    for slot in daily_slots:
-        print(slot)
+
+def inc_time(time_val, increment):
+    # get the number of minutes
+    mins = time_val % 100
+    # figure out the hours
+    hours = (time_val / 100)
+    # increment minutes
+    new_mins = mins + increment
+    # did we go over an hour boundary? (assuming we're adding no more than 60 minutes)
+    if new_mins > 59:
+        # then decrement the minutes
+        new_mins -= 60
+        hours += 1
+        if hours > 23:
+            # return 11:59 PM
+            return 2359
+    # return our results
+    if hours > 0:
+        return (hours * 100) + new_mins
+    else:
+        return new_mins
 
 
 def parse_slot_time(slot_trigger, slot_val):
@@ -318,16 +345,20 @@ def parse_slot_time(slot_trigger, slot_val):
         return int(slot_val)
     if slot_trigger == SUNRISE:
         # return the calculated solar sunrise time
-        return int(time_sunrise + slot_val)
+        return int(inc_time(time_sunrise, slot_val))
     # return the calculated solar sunset time
-    return int(time_sunset + slot_val)
+    return int(inc_time(time_sunset, slot_val))
 
 
-def is_on_time(time_val):
+def is_on_time():
+    # Are we in an ON mode? In other words, is the current time between any of the
+    # slot's on and off times?
+    # Start by getting the current time (in 24 hour format)
+    curr_time = get_time_24()
     # look through all of the daily slot values
     for slot in daily_slots:
         # if current time is between on/off times, then we're True
-        if slot[0] < time_val < slot[1]:
+        if slot[0] < curr_time < slot[1]:
             return True
     return False
 
