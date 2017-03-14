@@ -1,16 +1,19 @@
 # Raspberry Pi Relay Timer
 
-Kielbasa strip steak doner frankfurter beef sirloin. Ribeye flank brisket cupim chicken pancetta shoulder drumstick fatback. Ground round frankfurter kevin salami, kielbasa drumstick bacon beef ribs venison shoulder fatback. Meatloaf sausage jerky t-bone meatball pastrami. Brisket shoulder corned beef, tenderloin meatball short loin venison rump. Fatback hamburger alcatra pork loin short ribs, cupim andouille leberkas ham. Jerky pork belly meatloaf picanha.
+I've been doing a lot of relay-based projects lately; building several light timer projects. The first couple used Arduino-class devices, simple relays and provided the ability to set multiple on and off times throughout the day, just like those $10 power timers you can buy anywhere. These projects give me the ability to turn my Christmas lights at sundown and off when I go to bed, but not much more. 
 
-Beef ribs cupim pancetta, jerky frankfurter jowl swine cow sirloin leberkas tail. Tongue meatball tri-tip ball tip. Short ribs boudin sirloin chuck. Venison t-bone leberkas picanha, shoulder rump sausage.  
+What I really wanted though, is a way to have the lights turn on and off randomly (during specific time periods) to more accurately simulate me being home when I'm not. Products may exist that do this, but I've not seen any, so I decided to make my own. This repository contains the code for this project. 
+
+> **Note**: You can use this code for your own, personal projects, but if you make a commercial product that does this, can you share the love (10% for example)?
 
 ## Hardware Components
 
 To use this project, you'll need at a minimum the following hardware components:
 
 + [Raspberry Pi 3](https://www.raspberrypi.org/products/raspberry-pi-3-model-b/)
-+ A compatible relay/relay board
++ A compatible relay/relay board (see below)
 + 5V, 2.5A Micro USB power source (basically, a smartphone charger) - I use the [CanaKit 5V 2.5A Raspberry Pi 3 Power Supply/Adapter/Charger](https://www.amazon.com/gp/product/B00MARDJZ4)
++ An enclosure for the Raspberry Pi and relay. 
  
 For the relay, I used the [1-channel relay board](http://www.yourduino.com/sunshop/index.php?l=product_detail&p=181) from yourduino.com. The boards they're selling now are different than the ones I had lying around. They have a really good [relay tutorial](http://arduino-info.wikispaces.com/ArduinoPower) on their web site; even though it's geared primarily at Arduino users, it's still a lot of good information. Amazon.com also has a good [selection of relay boards](https://www.amazon.com/s/ref=nb_sb_noss_1?url=search-alias%3Daps&field-keywords=1+channel+relay) you can use as well.
 
@@ -22,7 +25,7 @@ The first thing you'll want to do is open the **Raspberry Pi menu** (in the uppe
 
 ![Assembly](screenshots/figure-01.png)
 
-Raspbian comes configured with its keyboard, timezone, and other locale settings configured for the United Kingdom (UK), so if you're in the US, or elsewhere that's not the UK, you'll want to switch over to the **localisation** tab and adjust the settings there as well.
+Raspbian comes configured with its **keyboard**, **timezone**, and other **locale** settings configured for the United Kingdom (UK), so if you're in the US, or elsewhere that's not the UK, you'll want to switch over to the **localisation** tab and adjust the settings there as well.
 
 When you're done configuring locale settings, you'll likely be prompted to reboot the Pi. Go ahead and do that before continuing. 
 
@@ -30,27 +33,102 @@ When the Pi comes back up, open a terminal window and execute the following comm
 
 	sudo apt-get update
 
-This updates the local catalog of applications. Next, execute the following command:
+This updates the local catalog of application repositories. Next, execute the following command:
 
 	sudo apt-get upgrade
 
-This command will update the Raspbian OS with all updates released after the latest image was published. The update process will take a long time, so pay attention, answer any prompts, and expect this process to take a few minutes or more (the last time I did this, it took about 15 minutes or more to complete).
+This command updates the Raspbian OS with all updates released after the latest image was published. The update process may take a long time, so pay attention, answer any prompts, and expect this process to take a few minutes or more (the last time I did this, it took about 15 minutes or more to complete).
 
-    sudo pip install pytz tzlocal
+Next, install some Python libraries used by the project; in the same terminal window, execute the following command:
+
+    sudo pip install pytz tzlocal numpy
         
-Now, lets download and project code; in the terminal window, execute the following command:
+Now, lets download and project code; still in the same terminal window (almost done now), execute the following command:
 
 	git clone https://github.com/johnwargo/raspberry-pi-relay-timer
 
-This will download the project's code from its Github repository and copy the files to the local (relative to your terminal window) `raspberry-pi-relay-timer` folder. 
+This downloads the project's code from its Github repository and copies the files to the local (relative to your terminal window) `raspberry-pi-relay-timer` folder. When it's done, you'll find the following files in the new folder:
 
-## Customizing the Controller's Time Slots
++	`controller.py` - The project's main application file. You'll run this program to start the relay controller.
++	`LICENSE` - The MIT license for the application. You're free to use this code as you see fit, but, like I said, if you make a commercial product out of this, share the love (with me, of course).
++	`readme.md` - This file.
++	`relay.py` - A simple Python module that exposes the capabilities the application needs to control the relay. I broke this out into a separate module to make it easier for you to use my code in other projects.
++	`relay-test.py` - A Python application that I built to help me write and test the `relay.py` module. You can run it to make sure your hardware works correctly.
++	`solar-times.py` - A simple Python application I wrote to help me write and test the code that connects to a web service to determine sunrise and sunset times for the current location. This code is also in the `controller.py` file.
++	`start-controller.sh` - A shell script you'll use to configure the Pi to start the controller application on start up.
+
+## Customizing the Controller Application
+
+If you look in the project's `controller.py` file, you'll find an area neat the top of the file that contains configuration settings I'm expecting you to update to make this application work for your configuration. It will look something like this:
+
+	# ============================================================================
+	# User (that's you) adjustable variables
+	# ============================================================================
+	# adjust these variables based on your particular hardware configuration
+	
+I'll describe each of the settings components in the following sub-sections.
+
+### Button Pin
 
 
+	# set this variable to the button pin used in your implementation
+	BUTTON_PIN = 19
+
+### Relay Pin
+
+
+	# set this variable to the GPIO pin the relay is connected to
+	RELAY_PIN = 18
+
+### Location
+
+
+	# Sunrise and sunset times vary depending on location, so...
+	# If using sunrise or sunset as trigger options, populate the locLat
+	# and locLong values with the location's latitude and longitude values
+	# These values are for Charlotte, NC, to get Sunrise/Sunset values for
+	# your location, replace these strings with the appropriate values for
+	# your location.
+	LOC_LAT = "35.227085"
+	LOC_LONG = "-80.843124"
+
+
+### Default Solar Times
+
+
+	# default times for sunrise and sunset. If solar data is enabled, the
+	# code will reach out every day at 12:01 and populate these values with
+	# the correct values for the current day. If this fails for any reason,
+	# the values will fall back to the previous day's values, or, finally,
+	# these values
+	time_sunrise = 700
+	time_sunset = 1900
+
+### Time Slots
+
+
+	# Slots array defines time windows and behavior for the relay
+	# format: [ OnTrigger, OnValue, OffTrigger, OffValue, doRandom]
+	slots = np.array(
+	    # ONLY modify the following array with your time settings
+	    [
+	        (SETTIME, 700, SETTIME, 900, False),
+	        (SETTIME, 1700, SETTIME, 2300, True),
+	        (SUNRISE, 15, SUNSET, -10, True)
+	    ],
+	    # leave the rest of this alone
+	    dtype=[
+	        ('onTrigger', np.dtype(int)),
+	        ('onValue', np.dtype(int)),
+	        ('offTrigger', np.dtype(int)),
+	        ('offValue', np.dtype(int)),
+	        ('doRandom', np.dtype(bool))
+	    ]
+	)
 
 ## Starting the Controller
 
-Next, change to the folder you just created by executing the following command:
+Open a terminal window, and change to the project folder using the following command:
 
 	cd raspberry-pi-relay-timer
 
