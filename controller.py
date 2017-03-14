@@ -174,9 +174,8 @@ def process_loop():
                         relay.set_status(True)
                     if current_time == slot[1]:
                         relay.set_status(False)
-        # wait a second then check again
-        # You can always increase the sleep value below to check less often
-        time.sleep(1)
+        # wait a little bit, then check again
+        time.sleep(.25)
 
 
 def validate_slot(slot):
@@ -270,7 +269,7 @@ def get_time_24(time_val):
     if isinstance(time_val, datetime):
         # then format the time
         if time_val.hour > 0:
-            return int((time_val.hour * 100) + time_val.minute)
+            return (int(time_val.hour) * 100) + int(time_val.minute)
         else:
             return int(time_val.minute)
     else:
@@ -350,6 +349,7 @@ def inc_time(time_val, increment):
 
 
 def parse_slot_time(slot_trigger, slot_val):
+    # return a time value based on the slot passed into the function
     if slot_trigger == SETTIME:
         # return the time value
         return int(slot_val)
