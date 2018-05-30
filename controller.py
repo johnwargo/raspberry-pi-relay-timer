@@ -166,6 +166,7 @@ def process_loop():
                         get_solar_times()
                         # build the list of on/off times for today
                         build_daily_slots_array()
+                        # otherwise just use the static slots we already have
 
                 # finally, check to see if we're supposed to be turning the
                 # relay on or off
@@ -176,6 +177,19 @@ def process_loop():
                         relay.set_status(False)
         # wait a little bit, then check again
         time.sleep(.25)
+
+
+def validate_slots():
+    global slots
+
+    # initialize our error flag
+    has_error = False
+    # Make sure our slots configuration is valid
+    for slot in np.nditer(slots):
+        if not validate_slot(slot):
+            print("we have an error")
+            has_error = True
+    return not has_error
 
 
 def validate_slot(slot):
@@ -190,26 +204,13 @@ def validate_slot(slot):
     # this one isn't critical, but when you get into big numbers (multiple hours of time), then the time math
     # gets wonky, so lets just cap it at 60 minutes?
     if ((slot['onTrigger'] < SETTIME) and (slot['onValue'] > 60)) or (
-                (slot['offTrigger'] < SETTIME) and (slot['offValue'] > 60)):
+            (slot['offTrigger'] < SETTIME) and (slot['offValue'] > 60)):
         print("Solar Data: Time delta cannot be more than 60 minutes")
         return False
 
     # we got this far, return True
     print("Slot is valid")
     return True
-
-
-def validate_slots():
-    global slots
-
-    # initialize our error flag
-    has_error = False
-    # Make sure our slots configuration is valid
-    for slot in np.nditer(slots):
-        if not validate_slot(slot):
-            print("we have an error")
-            has_error = True
-    return not has_error
 
 
 def check_for_solar_events():
@@ -365,6 +366,8 @@ def is_on_time():
     # slot's on and off times?
     # Start by getting the current time (in 24 hour format)
     curr_time = get_time_24(datetime.now())
+    # if you want to use UTC, replace the previous line with the following:
+    # curr_time = get_time_24(datetime.utcnow())
     # look through all of the daily slot values
     for slot in daily_slots:
         # if current time is between on/off times, then we're True
