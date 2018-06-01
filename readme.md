@@ -6,6 +6,11 @@ What I really wanted though, is a way to have the lights turn on and off randoml
 
 > **Note**: You can use this code for your own, personal projects, but if you make a commercial product based on this concept, can you share the love (10% for example)? :-)
 
+## Todo
+
++ Enable a UTC mode that ignores local time zone.
++ Figure out why sunrise and sunset aren't being calculated correctly.
+
 ## Hardware Components
 
 To use this project, you'll need at a minimum the following hardware components:
