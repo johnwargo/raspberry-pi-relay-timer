@@ -261,6 +261,13 @@ def adjust_time_utc(time_val):
     # convert the time value to local time based on timezone
     # time_val.replace(tzinfo=pytz.utc) adds timezone information (utc) to time_val
     # time_val.astimezone(tzlocal.get_localzone()) returns the time value in the current timezone
+
+    # several users reported a problem with the time conversion (UTC to local). time_val doesn't have
+    # a date component, so the conversion was failing.
+    # Fix provided by Chris Nichols: Since the time_val comes in with the year defined as 1900/01/01,
+    # we need to correct that in order to get the shift for the time zones right.
+    time_val = time_val.replace(year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
+    # Returning now to my code
     return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
 
 

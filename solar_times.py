@@ -35,6 +35,14 @@ def get_solar_times():
         # did we get a result?
         if res.status_code == requests.codes.ok:
             data = res.json()
+
+            # print("Raw Data")
+            # print("Sunrise:", data['results']['sunrise'])
+            # print(datetime.strptime(data['results']['sunrise'], format_str))
+            # print("Sunset:", data['results']['sunset'])
+            # print(datetime.strptime(data['results']['sunset'], format_str))
+            # print("TimeZone:", tzlocal.get_localzone())
+
             # time comes in as a string, in UTC time, but with no timezone data.
             # it must be converted into a format we can use...
             time_sunrise = adjust_time_utc(datetime.strptime(data['results']['sunrise'], format_str))
@@ -56,6 +64,12 @@ def adjust_time_utc(time_val):
     # convert the time value to local time based on timezone
     # time_val.replace(tzinfo=pytz.utc) adds timezone data to time_val 
     # time_val.astimezone(tzlocal.get_localzone()) returns the time value in the current timezone
+
+    # fix provided by Chris Nichols
+    # since the time_val comes in with the year defined as 1900/01/01 we need to correct that in order to get the shift
+    # for the time zones right.  Not sure why this is but my central time zone shift was being calculated at -5:51
+    time_val = time_val.replace(year=datetime.now().year, month=datetime.now().month, day=datetime.now().day)
+    # now we return to my code
     return get_time_24(time_val.replace(tzinfo=pytz.utc).astimezone(tzlocal.get_localzone()))
 
 
