@@ -35,14 +35,6 @@ def get_solar_times():
         # did we get a result?
         if res.status_code == requests.codes.ok:
             data = res.json()
-
-            # print("Raw Data")
-            # print("Sunrise:", data['results']['sunrise'])
-            # print(datetime.strptime(data['results']['sunrise'], format_str))
-            # print("Sunset:", data['results']['sunset'])
-            # print(datetime.strptime(data['results']['sunset'], format_str))
-            # print("TimeZone:", tzlocal.get_localzone())
-
             # time comes in as a string, in UTC time, but with no timezone data.
             # it must be converted into a format we can use...
             time_sunrise = adjust_time_utc(datetime.strptime(data['results']['sunrise'], format_str))
